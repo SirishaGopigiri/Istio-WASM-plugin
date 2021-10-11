@@ -1,0 +1,33 @@
+kind: pipeline
+type: kubernetes
+name: test-go
+steps:
+ - name: test
+   image: golang:alpine
+   commands:
+     - "apk add build-base"
+     - "go mod download"
+     - "go build -o app ."
+     - "go test -v"
+ - name: publish
+   image: plugins/docker
+   settings:
+    registry: quay.io
+    repo: quay.io/sirishagopigiri/golang-app
+    tags: [ "${DRONE_COMMIT_SHA:0:7}","latest" ]
+    username:
+     from_secret: docker_username
+    password:
+     from_secret: docker_password
+ - name: deliver
+   image: sinlead/drone-kubectl
+   settings:
+    kubernetes_server:
+     from_secret: k8s_server
+    kubernetes_cert:
+     from_secret: k8s_cert
+    kubernetes_token:
+     from_secret: k8s_token
+   commands:
+    - sed -i "s|golang-app:v1|golang-app:${DRONE_COMMIT_SHA:0:7}|g" deployment.yaml
+    - kubectl apply -f deployment.yaml
