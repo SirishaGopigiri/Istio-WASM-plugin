@@ -4,7 +4,7 @@ spec:
   meshConfig:
     defaultConfig:
       extraStatTags:
-      - request_username
+      - request_url_path
     accessLogFile: /dev/stdout
   components:
     egressGateways:
